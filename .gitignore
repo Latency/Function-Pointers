@@ -48,10 +48,12 @@ dlldata.c
 *.tmp
 *.tmp_proj
 *.log
+*.tlog
 *.vshost.exe
 *.vspscc
 *.vssscc
 .builds
+*.idb
 *.pidb
 *.svclog
 *.scc
@@ -174,3 +176,4 @@ UpgradeLog*.htm
 
 # Microsoft Fakes
 FakesAssemblies/
+
