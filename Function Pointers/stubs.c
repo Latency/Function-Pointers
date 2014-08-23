@@ -28,7 +28,7 @@ const string hello_again_command(const string a) {
   _malloc(&tmp, strlen(buf) + strlen(a) + 1 /* '\0' */);
   // "Hello World!" - '\0'
   memcpy(tmp, buf, 6);
-  // "Hello " + "?????????" + "World!\0"
+  // "Hello " + "xxxxxxxxx" + "World!\0"
   memcpy(tmp + 6 + strlen(a), buf + 5, strlen(buf) + 1 /* ' ' */ + 1 /* '\0' */ - 6 /* DONE */);
   // "Hello " + "?????????" + " World!"
   memcpy(tmp + 6, a, strlen(a));
