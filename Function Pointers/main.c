@@ -92,11 +92,15 @@ int main(int argc, char *argv[], char *envp[]) {
   printf("Enter in a command:  (%s | exit)\n", buf);
 
   string p;
-  do {
+  while (1) {
 #if _DEBUG
     char buf[BUFSIZ] = { "" };
     for (int y = 1; y < argc; ++y)
+#if defined(WIN32) && !defined(_CRT_SECURE_NO_WARNINGS)
+      sprintf_s(buf + strlen(buf), BUFSIZ - 1, " %s", argv[y]);
+#else
       sprintf(buf + strlen(buf), " %s", argv[y]);
+#endif
     p = buf;
 #else // Merge the args from the command line into one string
     printf("> ");
@@ -118,6 +122,9 @@ int main(int argc, char *argv[], char *envp[]) {
     // Classify token reference pointers mapping to 'args'
     set_t *tokens = NULL;      // tokens[token_count]
     classify_tokens(&tokens, args);
+
+    if (!strcmp(tokens[0].param, "exit"))
+      break;
 
     short dispose = 0;
     // Parse input
@@ -176,7 +183,7 @@ int main(int argc, char *argv[], char *envp[]) {
       }
       _free(args);
     }
-  } while (strcmp(p, "exit"));
+  }
 
   return 0;
 }
