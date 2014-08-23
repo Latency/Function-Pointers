@@ -54,6 +54,8 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -65,11 +67,12 @@
       <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>Disabled</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -79,7 +82,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="classify_tokens.c" />
+    <ClCompile Include="_free.c" />
+    <ClCompile Include="getline.c" />
+    <ClCompile Include="is_numeric.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="_malloc.c" />
+    <ClCompile Include="_realloc.c" />
+    <ClCompile Include="split.c" />
+    <ClCompile Include="lowercase.c" />
+    <ClCompile Include="stubs.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="_free.h" />
+    <ClInclude Include="_malloc.h" />
+    <ClInclude Include="_realloc.h" />
+    <ClInclude Include="string.h" />
+    <ClInclude Include="structs.h" />
+    <ClInclude Include="stubs.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

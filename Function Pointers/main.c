@@ -1,84 +1,40 @@
+// ****************************************************************************
+// * Project:  Function-Pointers
+// * File:     main.c
+// * Author:   Latency McLaughlin
+// * Date:     08/20/2014
+// ****************************************************************************
 /*
-* Topic for discussion found here http://lnkd.in/bV6XKX6
-*/
-// Where is the library for hashmap in plain old C?
-// I am not going to reinvent the wheel.
-// FOrget it, I will just do it the old fashioned way without.
+ * Topic for discussion found here http://lnkd.in/bV6XKX6
+ *
+ * Use C99 compilation rules for 'inline' types.
+ * > gcc -std=c99 -c main.c
+ */
 
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <stdarg.h>
-
-typedef void * fptr_t;
-#define PARAMS(args)  \
-        fptr_t Type##args(fptr_t userdata)
-#define FUNC_PTR(func)  \
-        fptr_t (*func)(fptr_t userdata)
-
-// Function pointer method signatures
-typedef char* (*signature0_t)();
-typedef char* (*signature1_t)(char *);
-typedef int   (*signature2_t)(int, int);
-typedef char* (*signature3_t)(char *, char *);
-
-// Signature Prototypes - Use a unique/hashkey value as argument
-#define SIG_TYPE(x) Type##x
-PARAMS(0);
-PARAMS(1);
-PARAMS(2);
-PARAMS(3);
-
-//-------------------------------------------------
-// Encapsulation Container
-//
-struct signatures {
-  void *  address;
-  union {
-    char *param1;
-  } type1;
-  union {
-    int   param1,
-          param2;
-  } type2;
-  union {
-    char *param1,
-         *param2;
-  } type3;
-};
+#include <string.h>   // strcmp, strlen
+#include <stdio.h>    // BUFSIZ
+#include <malloc.h>
+#include <stdlib.h>   // atoi
+#include <ctype.h>    // tolower
+#include "structs.h"
+#include "_free.h"
+#include "_malloc.h"
+#include "_realloc.h"
 
 
 //-------------------------------------------------
-// Method Commands
+// External prototypes
 //
-char * hello_command() {
-  return "Hello World!";
-}
-
-char * hello_again_command(char *a) {
-  return "Hello Again World!";
-}
-
-int add_command(int a, int b) {
-  return a + b;
-}
-
-char* append_command(char *a, char *b) {
-  return strcat(a, b);
-}
+extern string    getline();
+extern size_t    split(string **, const string a);
+extern size_t    lowercase(string *, const string);
+extern void      classify_tokens(set_t **, const string *);
 
 
 //-------------------------------------------------
 // Jump Table
 //
-#define COMMAND(name, type, method)  { #name, type, &method }
-
-struct command {
-  char *name;
-  FUNC_PTR(action);
-  void *address;
-} commands[] = {
+struct Command commands[] = {
   COMMAND(hello,  SIG_TYPE(0), hello_command),
   COMMAND(hello,  SIG_TYPE(1), hello_again_command),
   COMMAND(add,    SIG_TYPE(2), add_command),
@@ -87,115 +43,139 @@ struct command {
 
 
 //-------------------------------------------------
-// Parsers for function pointer invocation
-// XXX Private Access XXX
-PARAMS(Type1) {
-  type1_t *container = (type1_t *)userdata;
-  signature0_t action = (signature0_t)container->address;
-  return action();
-}
-
-PARAMS(Type2) {
-  type2_t *container = (type2_t *)userdata;
-  signature1_t action = (signature1_t)container->address;
-  return (void *)action(container->param1, container->param2);
-}
-
-PARAMS(Type3) {
-  type3_t *container = (type3_t *)userdata;
-  signature2_t action = (signature2_t)container->address;
-  return (void *)action(container->param1, container->param2);
-}
-
-
-//-------------------------------------------------
-// Helper method
-// XXX Public Access XXX
-char * getline(void) {
-  char * line = (char *)malloc(100), *linep = line;
-  size_t lenmax = 100, len = lenmax;
-  int c;
-
-  if (line == NULL)
-    return NULL;
-
-  for (;;) {
-    c = fgetc(stdin);
-    if (c == EOF)
-      break;
-
-    if (--len == 0) {
-      len = lenmax;
-      char * linen = (char *)realloc(linep, lenmax *= 2);
-
-      if (linen == NULL) {
-        free(linep);
-        return NULL;
-      }
-      line = linen + (line - linep);
-      linep = linen;
-    }
-
-    if ((*line++ = c) == '\n')
-      break;
-  }
-  *line = '\0';
-  return linep;
-}
-
-
-//-------------------------------------------------
 // Entry Point
 // XXX Public Access XXX
-int main() {
-  char buf[256];
-  for (size_t x = 0; x < sizeof(commands); x++)
-    sprintf(buf + strlen(buf), "%s%s", !strlen(buf) ? "" : " | ", commands[x].name);
-  printf("Enter in a command:  (%s | exit)\n", buf);
+int main(int argc, char *argv[], char *envp[]) {
+  size_t cmd_count = ARYSIZE(commands),
+         ary_size = 0,
+         idx = 0;
+  string buf = NULL,
+        *ary = NULL;
 
-  char *p;
-  do {
-    printf("> ");
-    p = getline();
-    // Convert to lowercase for strcmp. OR use strcasecmp for POSIX.1-2001 and 4.4BSD.
-    for (; *p; ++p) *p = tolower(*p);
+  for (size_t x = 0; x < cmd_count; x++) {
+    short duplicates = 0;
 
-    va_list ref;
-    va_start(ref, p);
-    char * arg = va_arg(ref, char *);
-    // Parse input
-    for (size_t x = 0; x < sizeof(commands); x++) {
-      char *format;
-      struct signatures signature;
-
-      if (!strcmp(commands[x].name, arg)) {
-        signature.address = commands[x].address;
-
-        // Determine type for fill.
-        if (commands[x].action == Type1) {
-          format = "%s";
-        } else if (commands[x].action == Type2) {
-          signature.type2.param1 = atoi(va_arg(ref, char *));
-          signature.type2.param2 = atoi(va_arg(ref, char *));
-          format = "%d %d";
-        } else if (commands[x].action == Type3) {
-          signature.type2.param1 = va_arg(ref, char *);
-          signature.type2.param2 = va_arg(ref, char *);
-          format = "%s %s";
-        } else {
-          puts("Signature type not found!");
-          break;
-        }
-
-        fptr_t data = (commands[x].action)(&signature);
-
-        // Output the data
-        puts((char *)data);
+    for (size_t y = 0; y < idx; y++) {
+      string ptr = ary[y];
+      if (!strcmp(commands[x].name, (!ptr ? "" : ptr))) {
+        duplicates++;
         break;
       }
     }
 
-    va_end(ref);
+    if (!duplicates) {
+      // Dynamically allocate size of string for optomial memory usage
+      string tmp;
+      _malloc(&tmp,
+              (buf != NULL ? strlen(buf) : 0) +
+              (buf != NULL ? 3 : 0) /* strlen(" | ") or strlen("") */ +
+              strlen(commands[x].name) +
+              1 /* '\0' */
+            );
+
+#if defined(WIN32) && !defined(_CRT_SECURE_NO_WARNINGS)
+      size_t asdf = _msize(tmp);
+      sprintf_s(tmp, _msize(tmp), "%s%s%s", ((buf && *buf) ? buf : ""), ((buf && *buf) ? " | " : ""), commands[x].name);
+#else
+      sprintf(tmp, "%s%s%s", ((buf && *buf) ? buf : ""), ((buf && *buf) ? " | " : ""), commands[x].name);
+#endif
+      _free(buf);    // Cleanup old memory location
+      buf = tmp;
+
+      // Assign command to list
+      // Reallocate and show new size:
+      ary = _realloc(ary, ary_size + sizeof(string));
+      ary[idx++] = commands[x].name;
+      ary_size = _msize(ary);
+    }
+  }
+  printf("Enter in a command:  (%s | exit)\n", buf);
+
+  string p;
+  do {
+#if _DEBUG
+    char buf[BUFSIZ] = { "" };
+    for (int y = 1; y < argc; ++y)
+      sprintf(buf + strlen(buf), " %s", argv[y]);
+    p = buf;
+#else // Merge the args from the command line into one string
+    printf("> ");
+    p = getline();
+#endif
+    // Left trim whitespace
+    while (isspace(*p)) p++;
+
+    string tmp = NULL;
+    lowercase(&tmp, p);
+
+    // Tokenize string
+    string *args = NULL;
+    size_t token_count = split(&args, tmp);
+
+    // Cleanup resources since memory copied to 'args'
+    _free(tmp);
+
+    // Classify token reference pointers mapping to 'args'
+    set_t *tokens = NULL;      // tokens[token_count]
+    classify_tokens(&tokens, args);
+
+    short dispose = 0;
+    // Parse input
+    for (size_t x = 0; x < cmd_count; x++) {
+      for (size_t y = 0; y < token_count; y++) {
+        if (!strcmp(commands[x].name, (!tokens[y].param ? "" : tokens[y].param))) {
+          // Detect signature type from arguments
+          struct Signatures signature;
+          signature.address = commands[x].address;
+
+          // Determine type for container fill
+          if (commands[x].action == SIG_TYPE(0) && !tokens[1].param) {
+            ;
+          } else if (commands[x].action == SIG_TYPE(1) &&
+              tokens[1].param && !tokens[1].is_numeric) {
+            signature.type._1.param1 = tokens[1].param;
+            dispose = 1;
+          } else if (commands[x].action == SIG_TYPE(2) &&
+              tokens[1].param && tokens[1].is_numeric &&
+              tokens[2].param && tokens[2].is_numeric) {
+            signature.type._2.param1 = atoi(tokens[1].param);
+            signature.type._2.param2 = atoi(tokens[2].param);
+          } else if (commands[x].action == SIG_TYPE(3) &&
+              tokens[1].param && !tokens[1].is_numeric &&
+              tokens[2].param && !tokens[2].is_numeric) {
+            signature.type._3.param1 = tokens[1].param;
+            signature.type._3.param2 = tokens[2].param;
+            dispose = 1;
+          } else
+            break;
+
+          fptr_t data = (commands[x].action)(&signature);
+
+          // Output the data
+          puts((char *)data);
+
+          // Internal cleanup
+          if (dispose) {
+            _free(data);
+            dispose = 0;
+          }
+
+          goto Cleanup;
+        }
+      }
+    }
+    // Finalizers
+  Cleanup: {
+      // Cleanup reference pointers from 'tokens'
+      _free(tokens);
+
+      // Cleanup pointer to array of 'args'
+      ary_size = 0;
+      for (string it = args[0]; it; it = args[++ary_size]) {
+        _free(it);
+      }
+      _free(args);
+    }
   } while (strcmp(p, "exit"));
 
   return 0;
