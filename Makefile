@@ -35,13 +35,13 @@ define variable-def
 #   $$(warning $1 is undefined)
     RELEASEDIR  = $(TOPDIR)/Release
     DEBUGDIR    = $(TOPDIR)/Debug
-    OBJDIR		= $(TOPDIR)/Objects
+    OBJDIR      = $(TOPDIR)/Objects
     SRCDIR      = $(TOPDIR)/src
   else
 #   $$(warning $1 is defined)
     RELEASEDIR  = Release
     DEBUGDIR    = Debug
-    OBJDIR		= Objects
+    OBJDIR      = Objects
     SRCDIR      = src
   endif
 endef
