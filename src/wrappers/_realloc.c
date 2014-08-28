@@ -8,6 +8,7 @@
  * Topic for discussion found here http://lnkd.in/bV6XKX6
  */
 #include <stdlib.h>
+#include <stdio.h>
 
 
 //-------------------------------------------------

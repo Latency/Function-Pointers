@@ -1,27 +1,24 @@
-/* **************************************************************************
- * Project:  Function-Pointers
- * File:     split.c
- * Author:   Latency McLaughlin
- * Date:     08/20/2014
- ****************************************************************************/
+// ****************************************************************************
+// * Project:  Function-Pointers
+// * File:     split.c
+// * Author:   Latency McLaughlin
+// * Date:     08/20/2014
+// ****************************************************************************
 /*
  * Topic for discussion found here http://lnkd.in/bV6XKX6
  */
-#pragma warning( push)
-#pragma warning( disable : 4001)
-#include <ctype.h>    /* isspace */
-#include <stdlib.h>   /* exit, perror */
-#include <malloc.h>   /* _msize */
-#pragma warning( pop)
+#include <ctype.h>    // isspace
+#include <stdlib.h>   // exit, perror
+#include <malloc.h>   // _msize
 #include "string.h"
 #include "_free.h"
 #include "_realloc.h"
 #include "_malloc.h"
 
 
-/* -------------------------------------------------
- * Spit a string into tokens
- */
+//-------------------------------------------------
+// Spit a string into tokens
+// XXX Public Access XXX
 size_t split(string *ary[], const string str) {
   string tok = NULL;
   size_t pos = 0,
@@ -40,7 +37,7 @@ size_t split(string *ary[], const string str) {
     if (!found) {
       *ary = _realloc(*ary, ary_size + sizeof(string));
 
-      /* Create new token */
+      // Create new token
       _malloc(&tok, 0);
       *(*ary + idx) = tok;
 
@@ -53,7 +50,7 @@ size_t split(string *ary[], const string str) {
         tok = _realloc(tok, tok_size + sizeof(char));
         tok[pos] = '\0';
 
-        /* Skip whitespace */
+        // Skip whitespace
         while (isspace(*it)) it++;
         it--;
 
@@ -72,7 +69,7 @@ size_t split(string *ary[], const string str) {
   if (found)
     goto Assign;
 
-  /* Add terminator element */
+  // Add terminator element
   *ary = _realloc(*ary, ary_size + sizeof(string));
   *(*ary + idx) = NULL;
 

@@ -1,117 +1,93 @@
-// ****************************************************************************
-// * Project:  Function-Pointers
-// * File:     structs.h
-// * Author:   Latency McLaughlin
-// * Date:     08/20/2014
-// ****************************************************************************
+/* **************************************************************************
+ * Project:  Function-Pointers
+ * File:     structs.h
+ * Author:   Latency McLaughlin
+ * Date:     08/20/2014
+ ****************************************************************************/
 #pragma once
 /*
  * Topic for discussion found here http://lnkd.in/bV6XKX6
  */
-#include "stubs.h"
+#include "string.h"
+#pragma warning( push)
+#pragma warning( disable : 4001)
+#include <string.h>   /* size_t */
+#pragma once
 
 
-#ifdef _MSC_VER
-  #define INLINE __forceinline // use __forceinline (VC++ specific)
-#else
-  #define INLINE inline        // use standard inline
-#endif
-
-
-//-------------------------------------------------
-// Macros
-//
-typedef void * fptr_t;
-
-#define SIG_TYPE(x) Type##x   // Use a unique/hashkey value as argument
-
-#define PARAMS(key)  \
-        INLINE fptr_t SIG_TYPE(key)(struct Signatures *container)
-
-#define FUNC_PTR(func)  \
-        fptr_t (*func)(struct Signatures *)
-
-#define COMMAND(name, type, method)  { #name, type, &method }
-
-#define ARYSIZE(ary) (sizeof(ary) / sizeof(ary[0]))
-
-
-//-------------------------------------------------
-// Parameter Containers For Signature Types
-// XXX Private Access XXX
+/* -------------------------------------------------
+ * Parameter Containers For Signature Argument Types
+ */
 typedef struct {
   string  param1;
-} type1_t;
-
-typedef struct {
-  int     param1,
-          param2;
-} type2_t;
+} arg_type1_t;
 
 typedef struct {
   string  param1,
           param2;
-} type3_t;
+} arg_type2_t;
 
+typedef struct {
+  int     param1,
+          param2;
+} arg_type3_t;
 
-//-------------------------------------------------
-// Encapsulation Containers
-// Signature Container
-// XXX Sealed Public Access XXX
-struct Signatures {
-  fptr_t address;
-
-  union {
-    type1_t _1;
-    type2_t _2;
-    type3_t _3;
-  } type;
-};
-
-
-//-------------------------------------------------
-// Token Classification
-//
+#pragma pack(push, 1)
 typedef struct {
   string  param;
-  int     is_numeric;
+  bool    is_numeric;
 } set_t;
+#pragma pack(pop)
+
+/* Function Pointer Signature Types */
+typedef const string(*signature0_t)(void);
+typedef const string(*signature1_t)(const string);
+typedef const string(*signature2_t)(const string, const string);
+typedef          int(*signature3_t)(int, int);
 
 
-//-------------------------------------------------
-// Jump Table Layout
-//
-struct Command {
-  string name;
-  FUNC_PTR(action);
-  fptr_t address;
+/* -------------------------------------------------
+ * Encapsulation Containers
+ */
+
+/* Function Signature Types */
+typedef union {
+  signature0_t _0;
+  signature1_t _1;
+  signature2_t _2;
+  signature3_t _3;
+} fstype_t;
+
+
+/* Argument Parameter Types */
+struct Signatures {
+#if defined(COMDAT_FOLDING)
+  size_t primary_key;
+#endif
+  fstype_t address;
+  void *data;
+  union {
+    arg_type1_t _1;
+    arg_type2_t _2;
+    arg_type3_t _3;
+  } arg;
 };
 
 
-//-------------------------------------------------
-// Function pointer method signatures &
-// Inlined connectors for function pointer invocation
-// XXX Private Access XXX
-PARAMS(0) {
-  typedef const string(*signature0_t)(void);
-  signature0_t signature = (signature0_t)container->address;
-  return (void *) signature();
-}
+/* -------------------------------------------------
+ * Jump Table Layout
+ */
+#pragma pack(push, 1)
+struct Command {
+  string name;
+  bool is_disposed;
+  void (*action)(struct Signatures *);
+  fstype_t address;
+};
+#pragma pack(pop)
 
-PARAMS(1) {
-  typedef const string(*signature1_t)(const string);
-  signature1_t signature = (signature1_t)container->address;
-  return (void *) signature(container->type._1.param1);
-}
 
-PARAMS(2) {
-  typedef int(*signature2_t)(int, int);
-  signature2_t signature = (signature2_t)container->address;
-  return (void *) signature(container->type._2.param1, container->type._2.param2);
-}
-
-PARAMS(3) {
-  typedef const string(*signature3_t)(const string, const string);
-  signature3_t signature = (signature3_t)container->address;
-  return (void *) signature(container->type._3.param1, container->type._3.param2);
-}
+struct Command_List {
+  size_t size;
+  struct Command **cmds;
+};

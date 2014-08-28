@@ -1,25 +1,22 @@
-/* **************************************************************************
- * Project:  Function-Pointers
- * File:     getline.c
- * Author:   Latency McLaughlin
- * Date:     08/20/2014
- ****************************************************************************/
+// ****************************************************************************
+// * Project:  Function-Pointers
+// * File:     getline.c
+// * Author:   Latency McLaughlin
+// * Date:     08/20/2014
+// ****************************************************************************
 #if defined(WIN32)
 /*
  * Topic for discussion found here http://lnkd.in/bV6XKX6
  */
-#pragma warning( push)
-#pragma warning( disable : 4001)
 #include <stdlib.h>
 #include <stdio.h>
-#pragma warning( pop)
 #include "string.h"
 
 
-/* -------------------------------------------------
- * Helper method
- */
-string getline(void) {
+//-------------------------------------------------
+// Helper method
+// XXX Public Access XXX
+string getline() {
   string line  = malloc(100),
          linep = line;
   size_t lenmax = 100,
@@ -46,8 +43,7 @@ string getline(void) {
       linep = linen;
     }
 
-    /* WChar vs Char?? */
-    if ((*line++ = (char) c) == '\n')
+    if ((*line++ = c) == '\n')
       break;
   }
   *line = '\0';

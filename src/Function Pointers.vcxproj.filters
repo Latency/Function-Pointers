@@ -24,16 +24,19 @@
     <ClCompile Include="classify_tokens.c">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="_realloc.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="_malloc.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="_free.c">
+      <Filter>Source</Filter>
+    </ClCompile>
     <ClCompile Include="lowercase.c">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="_isnumeric.h">
-      <Filter>Headers</Filter>
-    </ClCompile>
-    <ClCompile Include="signatures.c">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="jmptbl.c">
+    <ClCompile Include="is_numeric.c">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
@@ -54,12 +57,6 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="_free.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="signatures.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="config.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
