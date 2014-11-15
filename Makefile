@@ -47,10 +47,6 @@ define variable-def
 endef
 DEPDIR = $(OBJDIR)/Dependancies
 
-define nwln
-
-endef
-
 VERSION = 1
 PATCHLEVEL = 2
 
@@ -77,76 +73,106 @@ SUBPATCHLEVEL = $(shell date +%y%m%d)
 export DEBUG TOPDIR VERSION PATCHLEVEL
 $(eval $(call variable-def,RELATIVE))
 
+DEFS      = -DBINDIR="$(BINDIR)" -DVERSION="v$(VERSION).$(PATCHLEVEL).$(SUBPATCHLEVEL)"
 ifdef DEBUG
   BINDIR   = $(DEBUGDIR)
-else
-  BINDIR   = $(RELEASEDIR)
-endif
-
-# Directory path associations.
-VPATH := $(shell find '$(SRCDIR)/' -type d -exec echo \\"\"{}\\"\"\\\\n \;) # w/ string token delim @ \n
-#VPATH := $(shell find '$(SRCDIR)/' -type d | while read f ; do echo -e \\"\"$$f\\"\" ; done)
-VPATH := $(subst /\"\\n,\"\\n,$(VPATH))	# Unifiy all tokens
-VPATH := $(subst \\n,$(nwln),$(VPATH))	# Strip EoT delim
-
-# Source and object files.
-TMP := $(shell echo -e "$(VPATH)" | sed 's/\([^"]\) /\1?/g' ) # Replace space within tokens w/ ?
-SRCFILES := $(foreach d,$(TMP),$(shell find "$d/" -maxdepth 1 -type f -name "*.c" -exec echo \\"\"{}\\"\" \; ))
-SRCFILES_:= $(shell echo -e "$(SRCFILES)" | sed 's/\([^"]\) /\1\\ /g' | tr -d '"' ) # Replace space within tokens w/ '\ '
-HDRFILES := $(foreach d,$(TMP),$(shell find "$d/" -maxdepth 1 -type f -name "*.h" -exec echo \\"\"{}\\"\" \; ))
-OBJFILES := $(SRCFILES:.c\"=.o\")
-OBJFILES_:= $(shell echo -e "$(OBJFILES)" | sed 's/\([^"]\) /\1\\ /g' | tr -d '"' ) # Replace space within tokens w/ '\ '
-OBJSMADE := $(shell find "$(OBJDIR)/" -maxdepth 1 -type f -name "*.o" -exec echo \\"\"{}\\"\" \; )
-OBJSMADE_:= $(shell echo -e "$(OBJS)" | sed 's/\([^"]\) /\1\\ /g' | tr -d '"' )
-
-# Auto-dependancy generation files
-DEPFILES := $(SRCFILES:.c\"=.d\")
-TMP := $(shell echo -e "$(DEPFILES)" | sed 's/\([^"]\) /\1?/g' ) # Replace space within tokens w/ ?
-TMP := $(foreach d,$(TMP),\\\""$(DEPDIR)"/$(notdir "$d")\\\")
-DEPFILES := $(shell echo -e "$(TMP)" | sed 's/?/\\ /g')
-DEPFILES_:= $(shell echo -e "$(DEPFILES)" | sed 's/\([^"]\) /\1\\ /g' | tr -d '"' ) # Replace space within tokens w/ '\ '
-
-# Add additional paths here to [find . '$(BINDIR)/'] etc.
-TMP := $(shell find . '$(BINDIR)/' -maxdepth 0 -type d -exec echo \\"\"{}\\"\" \; 2>/dev/null) # w/ string token delim @ \n
-TMP := $(subst /\",\","$(TMP)")	# Unifiy all tokens
-TMP := $(shell echo -e "$(TMP)" | sed 's/\([^"]\) /\1?/g' ) # Replace space within tokens w/ ?
-BACKUPFILES := $(foreach d,$(TMP),$(shell find "$d/" -maxdepth 1 -type f -name "*~" -exec echo \\"\"{}\\"\" \; ))
-BACKUPFILES_:= $(shell echo -e "$(BACKUPFILES)" | sed 's/\([^"]\) /\1?/g' ) # Replace space within tokens w/ ?
-
-# Include directories
-TMP := $(shell echo -e "$(VPATH)" | sed 's/\([^"]\) /\1?/g' ) # Replace space within tokens w/ ?
-TMP := $(foreach d,$(TMP),-I\"$d\")
-INCLUDES := $(shell echo $(TMP) | sed 's/?/ /g')
-
-DEFS := -DBINDIR="$(BINDIR)" -DVERSION="v$(VERSION).$(PATCHLEVEL).$(SUBPATCHLEVEL)"
-ifdef DEBUG
   DEFS   += -D_DEBUG
 else
+  BINDIR   = $(RELEASEDIR)
   CFLAGS += -O3
 endif
 
-define create_directory =
+#############################################################################
+#                        Directory path associations                        #
+#############################################################################
+# w/ string token delim @ \n
+VPATH := $(shell find '$(SRCDIR)/' -type d -exec echo \\"\"{}\\"\" \;)
+VPATH := $(subst /\",\",$(VPATH))	# Unifiy all tokens
+VPATH_:= $(shell echo -e "$(VPATH)" | sed 's/\([^"]\) /\1\\ /g')
+
+#############################################################################
+#                             Build files                                   #
+#############################################################################
+# Replace space within tokens w/ ?
+TMP := $(shell echo -e "$(VPATH)" | sed 's/\([^"]\) /\1?/g' )
+SRCFILES := $(foreach d,$(TMP),$(shell find "$d/" -maxdepth 1 -type f -name \
+			"*.c" -exec echo \\"\"{}\\"\" \; ))
+SRCFILES_:= $(shell echo -e "$(SRCFILES)" | sed 's/\([^"]\) /\1\\ /g' | \
+			 tr -d '"' ) # Replace space within tokens w/ '\ '
+
+HDRFILES := $(foreach d,$(TMP),$(shell find "$d/" -maxdepth 1 -type f -name \
+			"*.h" -exec echo \\"\"{}\\"\" \; ))
+
+OBJFILES := $(SRCFILES:.c\"=.o\")
+# Replace space within tokens w/ ?
+TMP := $(shell echo -e "$(OBJFILES)" | sed 's/\([^"]\) /\1?/g' )
+TMP := $(foreach d,$(TMP),\\\""$(OBJDIR)"/$(notdir "$d")\\\")
+OBJFILES := $(shell echo -e "$(TMP)" | sed 's/?/\\ /g')
+OBJFILES_:= $(shell echo -e "$(OBJFILES)" | sed 's/\([^"]\) /\1\\ /g' | \
+			 tr -d '"' ) # Replace space within tokens w/ '\ '
+
+OBJSMADE := $(shell [ -d "$(OBJDIR)" ] && find "$(OBJDIR)/" \
+			 -maxdepth 1 -type f -name "*.o" -exec echo \\"\"{}\\"\" \; )
+OBJSMADE_:= $(shell echo -e "$(OBJSMADE)" | \
+			 sed 's/\([^"]\) /\1\\ /g' | tr -d '"' )
+
+#############################################################################
+# Auto-dependancy generation files
+#############################################################################
+DEPFILES := $(SRCFILES:.c\"=.P\")
+# Replace space within tokens w/ ?
+TMP := $(shell echo -e "$(DEPFILES)" | sed 's/\([^"]\) /\1?/g' )
+TMP := $(foreach d,$(TMP),\\\""$(DEPDIR)"/$(notdir "$d")\\\")
+DEPFILES := $(shell echo -e "$(TMP)" | sed 's/?/\\ /g')
+DEPFILES_:= $(shell echo -e "$(DEPFILES)" | sed 's/\([^"]\) /\1\\ /g' | \
+			 tr -d '"' ) # Replace space within tokens w/ '\ '
+-include $(DEPFILES_)
+
+#############################################################################
+#                               Backup files                                #
+#############################################################################
+# Add additional paths here to [find . '$(BINDIR)/'] etc.
+TMP := $(shell find . '$(BINDIR)/' -maxdepth 0 -type d -exec \
+		echo \\"\"{}\\"\" \; 2>/dev/null) # w/ string token delim @ \n
+TMP := $(subst /\",\","$(TMP)")	# Unifiy all tokens
+# Replace space within tokens w/ ?
+TMP := $(shell echo -e "$(TMP)" | sed 's/\([^"]\) /\1?/g' )
+BACKUPFILES := $(foreach d,$(TMP),$(shell find "$d/" -maxdepth 1 -type f \
+				-name "*~" -exec echo \\"\"{}\\"\" \; ))
+# Replace space within tokens w/ ?
+BACKUPFILES_:= $(shell echo -e "$(BACKUPFILES)" | sed 's/\([^"]\) /\1?/g' )
+
+#############################################################################
+#                          Include directories                              #
+#############################################################################
+# Replace space within tokens w/ ?
+TMP := $(shell echo -e "$(VPATH)" | sed 's/\([^"]\) /\1?/g' )
+TMP := $(foreach d,$(TMP),-I\"$d\")
+INCLUDES := $(shell echo $(TMP) | sed 's/?/ /g')
+
+
+define create_directory
   if  [ ! -d "$(1)" ]; then \
 	echo "Creating directory for \`$(1)'" ; \
     mkdir -p "$(1)" ; \
    fi
 endef
 
-define remove_folder =
+define remove_folder
   if  [ -d "$(1)" ]; then \
     echo "Removing folder \`$(1)'" ; \
     $(RM) -rf "$(1)" ; \
   fi
 endef
 
-define create_backup =
+define create_backup
   if [ -d "$(1)" -a -f "$(2)" ]; then \
     echo "Creating backup \`$(2)' -> \`$(2)~'" ; \
     mv -f "$(2)" "$(2)~" ; \
   fi
 endef
 
-define path_parse =
+define path_parse
   # Equivilent to $(*F) | $(*D) but to include spaces within file/dir names
   $(eval TMP := $(shell echo $(1) | sed 's/\([^"]\) /\1?/g' )) 
   $(eval TMPD:= $(dir $(TMP)))
@@ -155,59 +181,52 @@ define path_parse =
   $(eval TMPF:= $(shell echo $(TMPF) | sed 's/?/\\ /g' ))
 endef
 
-define makedepend =
-  echo "Compiling \`$(1)'"
-  $(call path_parse,$(1))
-  #echo " Creating \`$(DEPDIR)/$(TMPF).d'"
-  $(COMPILE.c) -MMD $(INCLUDES) $(DEFS) "$^" -o "$(2)/$(TMPF).o"
+define define_compile_rules
+OBJDIR_:= $(shell echo -e "$(OBJDIR)" | sed 's/\([^"]\) /\1\\ /g')
+    ######################################################
+    # Compile and generate dependency info;
+    ######################################################
+    #   sed:    strip leading spaces
+    #   sed:    remove comments
+    #   sed:    fill space seperator '?' for directories/files (if applicable)
+    #   sed:    strip the target (everything up to and incl. the colon)
+    #   sed:    remove any continuation backslashes
+    #   sed:    swallow any lines with a colon
+    #   fmt -1: list filenames one per line
+    #   sed:    add trailing colons
+    #   sed:    restore fill space seperator
+    #   redirect out to new file (*.P)rocessed
+    #   remove (*.d)ependancy file
+$(OBJDIR_)/%.o: $(1)/%.c
+	@echo "Compiling \`$<'"
+	@$(call path_parse,"$<")
+	@echo " Creating \`$(DEPDIR)/$(TMPF:.c=.d)'"
+	@$(COMPILE.c) -MMD -MF "$(DEPDIR)/$(TMPF:.c=.d)" $(INCLUDES) \
+						 $(DEFS) "$<" -o "$(OBJDIR)/$(TMPF:.c=.o)"
+	@# Dynamically generate build rules to rebuild when touched
+	@# See Chapter 4 of the 'make' manual, --
+	@#  "Rules without Commands or Prerequisites"
+	@sed -e 's/^ *//' -e 's/#.*//' -e 's/\ /?/g' -e 's/^.*:[ ]*//' \
+	  -e 's/[^ ]\\$$//' -e '/^\s*$$/d' < "$(DEPDIR)/$(TMPF:.c=.d)" | \
+	  fmt -1 | sed -e 's/$$/:/' -e 's/?/ /g' >> "$(DEPDIR)/$(TMPF:.c=.P)" >> \
+	  "$(DEPDIR)/$(TMPF:.c=.d)" ; \
+	  mv -f "$(DEPDIR)/$(TMPF:.c=.d)" "$(DEPDIR)/$(TMPF:.c=.P)"
 endef
 
+$(foreach directory,$(sort $(dir "$(VPATH_)")),$(eval $(call define_compile_rules,$(directory))))
 
 #############################################################################
 #                               Build Rules                                 #
 #############################################################################
 
-% : %.c
-	@echo "  Linking \`$<'"
-	@$(call create_backup,$(BINDIR),$@)
-	@$(LINK.o) $(LDLIBS) $(OBJSMADE_) -o $@
-
 %.P : %.c
+	@echo "Testing"
 	@$(call makedepend,$*,$(DEPDIR))
 	@sed 's/\($*\)\.o[ :]*/\1.o $@ : /g' < $*.d > $@; \
-	 $(RM) $*.d; [ -s $@ ] || rm -f $@
+	 $(RM) $*.d; [ -s $@ ] || $(RM) $@
 
 
-   ######################################################
-   # Compile and generate dependency info;
-   ######################################################
-   #   sed:    strip leading spaces
-   #   sed:    fill space seperator '?' for directories/files (if applicable)
-   #   sed:    strip the target (everything before colon) to preserve
-   #   sed:    remove any continuation backslashes
-   #   fmt -1: list filenames one per line
-   #   sed:    add trailing colons
-   #   sed:    restore fill space seperator
-%.o : %.c
-	@$(call makedepend,$^,$(DEPDIR))
-	@# Dynamically generate build rules for pre-compiled files (.o.c.h) to rebuild when touched
-	@# See Chapter 4 of the 'make' manual, "Rules without Commands or Prerequisites"
-	@sed -e 's/^ *//' -e 's/\ /?/g' -e '0,/.*:/{//d;}' \
-	  -e 's/[^ ]\\$$//' < "$(DEPDIR)/$(TMPF).d" | fmt -1 | \
-	  sed -e 's/$$/:/' -e 's/?/ /g' >> "$(DEPDIR)/$(TMPF).d"
-	@# Nop out comments
-	@# Strip target (up to the colon)
-	@# Remove continuation backslashes
-	@# Ѕwallow empty lines (possibly from comments)
-	@# Append comma after each line
-	@cp "$(DEPDIR)/$(TMPF).d" "$(DEPDIR)/$(TMPF).P" ; \
-	 sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
-	 -e '/^$$/ d' -e 's/$$/ :/' < "$(DEPDIR)/$(TMPF).d" >> "$(DEPDIR)/$(TMPF).P" ; \
-	 echo ""
-	@#$(RM) "$(DEPDIR)/$(TMPF).d"
 
-
--include $(DEPFILES_)
 #############################################################################
 #                           Build Targets                                   #
 #############################################################################
@@ -223,6 +242,9 @@ endif
 ## Default Rule (Build Output File) ##
 OTMP := $(shell echo "$(BINDIR)/$(OUTPUT_FILE)" | sed 's/\([^"]\) /\1\\ /g' )
 $(OTMP): init_obj init_dep $(OBJFILES_) init_bin
+	@$(call create_backup,$(BINDIR),$@)
+	@echo "  Linking \`$<'"
+	@$(LINK.o) $(LDLIBS) $(OBJSMADE_) -o "$@"
 
 
 ## ALL ##
@@ -274,6 +296,7 @@ test:
 	@echo TMP=$(TMP)
 	@echo TOPDIR=$(TOPDIR)
 	@echo VPATH=$(VPATH)
+	@echo VPATH_=$(VPATH_)
 	@echo OUTPUT_FILE=$(OUTPUT_FILE)
 	@echo RELEASEDIR=$(RELEASEDIR)
 	@echo DEBUGDIR=$(DEBUGDIR)
@@ -284,8 +307,11 @@ test:
 	@echo SRCFILES_=$(SRCFILES_)
 	@echo OBJFILES=$(OBJFILES)
 	@echo OBJFILES_=$(OBJFILES_)
+	@echo OBJSMADE=$(OBJSMADE)
+	@echo OBJSMADE_=$(OBJSMADE_)
 	@echo HDRFILES=$(HDRFILES)
 	@echo DEPFILES=$(DEPFILES)
+	@echo DEPFILES_=$(DEPFILES_)
 	@echo BACKUPFILES=$(BACKUPFILES)
 	@echo OBJS=$(OBJS)
 	@echo INCLUDES=$(INCLUDES)
@@ -307,7 +333,7 @@ ifdef DEBUG
 ## DEPEND ##
 DTMP := $(shell echo "$(DEPDIR)/$(DEPFILE)" | sed 's/\([^"]\) /\1\\ /g' )
 depend $(DTMP): init_dep
-	@if [ "$@" != "$(DEPDIR)/$(DEPFILE)" -o ! -e "$(DEPDIR)/$(DEPFILE)" ]; then \
+	@if ["$@" != "$(DEPDIR)/$(DEPFILE)" -o ! -e "$(DEPDIR)/$(DEPFILE)"]; then \
 	  echo "Generating source code dependency information."; \
 	  $(CC) -MM $(SRCFILES_) $(INCLUDES) > "$(DEPDIR)/$(DEPFILE)" ; \
 	fi
