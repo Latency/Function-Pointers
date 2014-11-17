@@ -181,8 +181,6 @@ DEPFILES_ = $(call normalize_path,$(DEPFILES))
 DEPSMADE  = $(call find,$(DEPDIR),*.dep,1,f)
 DEPSMADE_ = $(call normalize_path,$(DEPSMADE))
 
--include $(DEPFILES_)
-
 #############################################################################
 #                               Backup files                                #
 #############################################################################
@@ -410,3 +408,4 @@ endif
 	"depend         - Generates dependancies for pre-compiled headers.\n"\
 	"help           - Shows this screen.\n"
 
+-include $(DEPFILES_)
