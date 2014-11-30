@@ -13,8 +13,8 @@
 #include <malloc.h>       /* _msize */
 #pragma warning( pop)
 #include "structs.h"      /* set_t */
-#include "_realloc.h"
-#include "_isnumeric.h"
+#include "wrappers/_isnumeric.h"
+#include "wrappers/_realloc.h"
 
 
 /* -------------------------------------------------

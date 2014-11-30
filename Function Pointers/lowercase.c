@@ -13,9 +13,9 @@
 #include <stdlib.h>       /* exit, free */
 #pragma warning( pop)
 #include "string.h"
-#include "_malloc.h"
-#include "_realloc.h"
-#include "_free.h"
+#include "wrappers/_malloc.h"
+#include "wrappers/_realloc.h"
+#include "wrappers/_free.h"
 
 
 /* -------------------------------------------------

@@ -22,9 +22,9 @@
 #include <ctype.h>    /* tolower */
 #pragma warning( pop)
 #include "signatures.h"
-#include "_free.h"
-#include "_malloc.h"
-#include "_realloc.h"
+#include "wrappers/_free.h"
+#include "wrappers/_malloc.h"
+#include "wrappers/_realloc.h"
 
 
 /* -------------------------------------------------

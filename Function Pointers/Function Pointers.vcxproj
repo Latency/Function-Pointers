@@ -84,7 +84,6 @@
       <FileType>CppHeader</FileType>
     </ClCompile>
     <ClCompile Include="signatures.c" />
-    <ClCompile Include="_isnumeric.h" />
     <ClCompile Include="main.c" />
     <ClCompile Include="split.c" />
     <ClCompile Include="lowercase.c" />
@@ -95,12 +94,13 @@
     <ClInclude Include="signatures.h">
       <FileType>CppHeader</FileType>
     </ClInclude>
-    <ClInclude Include="_free.h" />
-    <ClInclude Include="_malloc.h" />
-    <ClInclude Include="_realloc.h" />
     <ClInclude Include="string.h" />
     <ClInclude Include="structs.h" />
     <ClInclude Include="stubs.h" />
+    <ClInclude Include="wrappers\_free.h" />
+    <ClInclude Include="wrappers\_isnumeric.h" />
+    <ClInclude Include="wrappers\_malloc.h" />
+    <ClInclude Include="wrappers\_realloc.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

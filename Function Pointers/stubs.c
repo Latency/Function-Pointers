@@ -13,8 +13,8 @@
 #include <malloc.h>     /* _msize */
 #pragma warning( pop)
 #include "string.h"     /* string, bool */
-#include "_malloc.h"
-#include "_realloc.h"
+#include "wrappers/_malloc.h"
+#include "wrappers/_realloc.h"
 
 
 /* -------------------------------------------------

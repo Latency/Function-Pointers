@@ -11,8 +11,8 @@
 #include "structs.h"
 #include "signatures.h"
 #include "stubs.h"
-#include "_free.h"
-#include "_malloc.h"
+#include "wrappers/_free.h"
+#include "wrappers/_malloc.h"
 
 /* -------------------------------------------------
  * Jump Table
